@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Equilibrio statico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* VOICE: chiaro, da laboratorio di fisica, didattico
+   IDEA: il quaderno a quadretti su cui si disegna il diagramma di corpo libero
+   PICTURE: la scena con le forze come vettori colorati, grande, in alto
+   COLOUR and TYPE: carta bianca, inchiostro blu notte, un colore per ogni tipo di forza; Atkinson Hyperlegible
+   LAYOUT: scena + comandi affiancati, sotto schede delle forze ed equazioni */
+:root{color-scheme:light dark;
+--bg:light-dark(#f3f1ea,#12161d);--paper:light-dark(#ffffff,#1a2029);--ink:light-dark(#15202e,#e8ecf2);--muted:light-dark(#5b6573,#9aa5b4);
+--line:light-dark(#dcd8cc,#2c3440);--grid:light-dark(#e9eef5,#222a35);--solid:light-dark(#e7e2d4,#2a313c);--solid2:light-dark(#b9b09a,#4b5563);
+--cP:light-dark(#c0392b,#ff6b5b);--cN:light-dark(#1f5fae,#6aa8ff);--cA:light-dark(#c26a00,#ffb547);--cT1:light-dark(#15803d,#4ade80);--cT2:light-dark(#7c3aed,#b794ff);
+--cT3:light-dark(#0e7490,#38c6e0);--cF:light-dark(#0f766e,#2dd4bf);--cE:light-dark(#a21caf,#f07cff);--cR:light-dark(#111827,#f3f4f6);--cEl:light-dark(#be185d,#ff7ab5);
+--ok:light-dark(#15803d,#4ade80);--bad:light-dark(#b91c1c,#ff6b6b);--accent:light-dark(#1f5fae,#6aa8ff)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Atkinson Hyperlegible",system-ui,sans-serif;overflow-x:clip}
+header{padding:20px max(3vw,16px) 12px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:end;justify-content:space-between}
+h1{font-size:clamp(26px,3.4vw,36px);line-height:1.05;margin:0;text-wrap:balance}
+header p{margin:4px 0 0;color:var(--muted);max-width:60ch}
+.gsel{display:flex;align-items:center;gap:8px;font-size:15px}
+select,input[type=number]{font:inherit;font-size:16px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;padding:0 max(3vw,16px) 12px}
+.tab{font:inherit;font-size:15px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:9px 16px;border-radius:999px;cursor:pointer;min-height:44px}
+.tab[aria-selected=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1400px;margin:0 auto;padding:0 max(3vw,16px) 40px}
+.top{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px}
+@media(max-width:920px){.top{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px}
+.scene svg{width:100%;height:auto;display:block;border-radius:8px;touch-action:none;user-select:none}
+.intro{margin:0 0 10px;color:var(--muted);font-size:15px}
+.status{margin-top:10px;padding:10px 14px;border-radius:10px;font-weight:700;border:2px solid}
+.status.ok{color:var(--ok);border-color:var(--ok)}.status.bad{color:var(--bad);border-color:var(--bad)}
+.status span{display:block;font-weight:400;color:var(--ink);font-size:15px}
+h2{font-size:20px;margin:0 0 10px}h3{font-size:17px;margin:14px 0 6px}
+.ctrl{margin-bottom:14px}.ctrl label{display:block;font-size:15px;margin-bottom:2px}
+.row{display:flex;align-items:center;gap:8px}
+.row input[type=range]{flex:1;accent-color:var(--accent);height:32px}
+.row input[type=number]{width:84px;text-align:right}
+.u{width:30px;color:var(--muted);font-size:14px;white-space:nowrap}
+.opts label{display:flex;align-items:center;gap:8px;font-size:15px;min-height:34px;cursor:pointer}
+.opts input{width:18px;height:18px;accent-color:var(--accent)}
+.btn{font:inherit;font-size:15px;padding:9px 14px;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;margin:0 6px 6px 0}
+.btn:hover{border-color:var(--ink)}
+.fblock{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px}
+.fblock .fh{display:flex;justify-content:space-between;align-items:center;font-weight:700;margin-bottom:6px}
+.msg{font-size:14px;color:var(--muted);min-height:1.2em}
+.bottom{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;margin-top:16px}
+@media(max-width:920px){.bottom{grid-template-columns:minmax(0,1fr)}}
+.forces{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.force{border:1px solid var(--line);border-left:6px solid var(--c);border-radius:10px;padding:10px 12px}
+.force.comp{border-style:dashed;border-left-style:solid}
+.fhd{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.sym{font-style:italic;font-weight:700;font-size:22px;color:var(--c)}
+.fname{font-weight:700;flex:1}
+.fval{font-weight:700;white-space:nowrap}
+dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;margin:8px 0 0;font-size:14.5px}
+dt{color:var(--muted)}dd{margin:0}
+.eq{font-size:15.5px}
+.eq p{margin:4px 0 10px;padding:8px 10px;background:var(--bg);border-radius:8px;overflow-x:auto}
+.eq h4{margin:10px 0 2px;font-size:15px}
+.eq .note{background:none;padding:0;color:var(--muted);font-size:14.5px}
+ol.steps{margin:6px 0 0;padding-left:20px;font-size:15px}ol.steps li{margin-bottom:4px}
+table.mom{width:100%;border-collapse:collapse;font-size:14.5px;margin:6px 0 10px}
+table.mom th,table.mom td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:right}
+table.mom th:first-child,table.mom td:first-child{text-align:left}
+td.n{white-space:nowrap}
+.lbl{font:700 17px "Atkinson Hyperlegible",system-ui,sans-serif;font-style:italic;paint-order:stroke;stroke:var(--paper);stroke-width:5px;stroke-linejoin:round}
+.vl{font:400 13px "Atkinson Hyperlegible",system-ui,sans-serif;font-style:normal}
+.small{font:14px "Atkinson Hyperlegible",system-ui,sans-serif;fill:var(--muted)}
+.ang{font:italic 700 16px "Atkinson Hyperlegible",serif;fill:var(--ink)}
+@media(prefers-reduced-motion:no-preference){.scene svg g.pulse{animation:p 1.4s ease-in-out infinite}@keyframes p{50%{opacity:.45}}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Simulatore di equilibrio statico</h1>
+    <p>Scegli una situazione, cambia i dati e osserva le forze: ogni vettore è descritto per tipo, punto di applicazione, direzione, verso e modulo.</p>
+  </div>
+  <label class="gsel">g =
+    <select id="gsel"><option value="9.81" selected>9,81 m/s²</option><option value="9.8">9,8 m/s²</option><option value="10">10 m/s²</option></select>
+  </label>
+</header>
+<nav class="tabs" id="tabs" role="tablist"></nav>
+<div class="wrap">
+  <div class="top">
+    <section class="card scene">
+      <p class="intro" id="intro"></p>
+      <svg id="svg" viewBox="0 0 800 560" role="img" aria-label="Scena con il diagramma delle forze"></svg>
+      <div class="status" id="status"></div>
+    </section>
+    <aside class="card">
+      <h2>Dati del problema</h2>
+      <div id="ctrls"></div>
+      <h3>Visualizzazione</h3>
+      <div class="opts" id="opts"></div>
+    </aside>
+  </div>
+  <div class="bottom">
+    <section class="card">
+      <h2>Forze agenti</h2>
+      <div class="forces" id="forces"></div>
+      <div id="compsWrap"></div>
+    </section>
+    <section class="card eq">
+      <h2>Condizioni di equilibrio</h2>
+      <div id="eqs"></div>
+      <h3>Metodo di risoluzione</h3>
+      <ol class="steps" id="steps"></ol>
+    </section>
+  </div>
+</div>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const rad=d=>d*Math.PI/180, deg=r=>r*180/Math.PI;
+const fmt=(v,d=2)=>(Math.abs(v)<5e-10?0:v).toLocaleString('it-IT',{minimumFractionDigits:d,maximumFractionDigits:d});
+let g=9.81;
+const C={P:'--cP',N:'--cN',A:'--cA',T1:'--cT1',T2:'--cT2',T3:'--cT3',F:'--cF',E:'--cE',R:'--cR',El:'--cEl'};
+const col=v=>`var(${v})`;
+const PCOL=['--cF','--cN','--cA','--cT1','--cEl','--cT2'];
+const SUB='₀₁₂₃₄₅₆₇₈₉';
+
+const state={
+  sc:'piano',
+  opt:{comp:true,val:true,fbd:false,axes:false,res:true,equi:false,poly:false},
+  piano:{m:10,mu:0.5,F:45,a:30,F2:50,a2:20,modo:'tira'},
+  incline:{m:5,th:30,mu:0.6,F:0},
+  funi:{m:4,a1:40,a2:60},
+  leva:{m1:3,x1:0.5,m2:2,x2:3.5,xf:2,ma:0},
+  molla:{m:0.5,k:40},
+  punto:{forces:[{F:90,a:30},{F:70,a:150},{F:60,a:260}]}
+};
+
+/* ---------- disegno ---------- */
+function arrow(x,y,dx,dy,c,label,o={}){
+  const L=Math.hypot(dx,dy); if(L<1.5) return '';
+  const ux=dx/L,uy=dy/L,w0=o.w||3.2,h=Math.min(w0*4,L*.6),w=h*.45;
+  const tx=x+dx,ty=y+dy,bx=tx-ux*h,by=ty-uy*h;
+  const cs=col(c);
+  let s=`<g opacity="${o.op??1}" ${o.cls?`class="${o.cls}"`:''}><line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" style="stroke:${cs}" stroke-width="${w0}" stroke-linecap="round" ${o.dash?'stroke-dasharray="7 5"':''}/><polygon points="${tx.toFixed(1)},${ty.toFixed(1)} ${(bx-uy*w).toFixed(1)},${(by+ux*w).toFixed(1)} ${(bx+uy*w).toFixed(1)},${(by-ux*w).toFixed(1)}" style="fill:${cs}"/>`;
+  if(label){
+    const off=o.lo??20, lx=tx+ux*off+(o.px||0), showV=o.v!=null&&state.opt.val;
+    const ly=ty+uy*off+(o.py||0)+(showV?-2:6);
+    s+=`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" class="lbl" style="fill:${cs}" text-anchor="middle">${label}${showV?`<tspan x="${lx.toFixed(1)}" dy="1.15em" class="vl">${fmt(o.v,1)} ${o.u||'N'}</tspan>`:''}</text>`;
+  }
+  return s+'</g>';
+}
+const line=(x1,y1,x2,y2,st='stroke:var(--muted)',extra='')=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" style="${st}" ${extra}/>`;
+const dashed=(x1,y1,x2,y2)=>line(x1,y1,x2,y2,'stroke:var(--muted)','stroke-width="1.2" stroke-dasharray="4 4"');
+function arcPath(cx,cy,r,a1,a2,sweep){const p=a=>[cx+r*Math.cos(rad(a)),cy+r*Math.sin(rad(a))];const[x1,y1]=p(a1),[x2,y2]=p(a2);return `M${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 0 ${sweep} ${x2.toFixed(1)},${y2.toFixed(1)}`}
+function dimH(x1,x2,y,label){const a=Math.min(x1,x2),b=Math.max(x1,x2);if(b-a<2)return '';return line(a,y,b,y,'stroke:var(--muted)','stroke-width="1.2"')+line(a,y-6,a,y+6)+line(b,y-6,b,y+6)+`<text x="${(a+b)/2}" y="${y-6}" class="small" text-anchor="middle">${label}</text>`}
+function spring(x,y1,y2,n=12,w=16,st='stroke:var(--ink)'){const L=y2-y1,e=12,h=(L-2*e)/n;let d=`M${x},${y1} L${x},${y1+e}`;for(let i=0;i<n;i++){d+=` L${x+(i%2?-w:w)},${y1+e+h*(i+.5)}`}d+=` L${x},${y2-e} L${x},${y2}`;return `<path d="${d}" fill="none" style="${st}" stroke-width="2.2" stroke-linejoin="round"/>`}
+const DEFS=`<defs><pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="9" style="stroke:var(--solid2)" stroke-width="2"/></pattern>
+<pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20,0 L0,0 0,20" fill="none" style="stroke:var(--grid)" stroke-width="1"/></pattern>
+<marker id="mk" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--bad)"/></marker></defs>
+<rect width="800" height="560" fill="url(#grid)"/>`;
+const ceiling=(x,y,w)=>`<rect x="${x-w/2}" y="${y-14}" width="${w}" height="14" fill="url(#hatch)"/>`+line(x-w/2,y,x+w/2,y,'stroke:var(--ink)','stroke-width="2"');
+
+/* ---------- 1. PIANO INCLINATO ---------- */
+function rIncline(s){
+  const o=state.opt, th=rad(s.th), c=Math.cos(th), sn=Math.sin(th);
+  const P=s.m*g, Ppar=P*sn, Pperp=P*c, N=Pperp, fmax=s.mu*N, freq=Ppar-s.F;
+  const ok=Math.abs(freq)<=fmax+1e-9, f=ok?freq:Math.sign(freq)*fmax, R=s.F+f-Ppar;
+  const k=150/Math.max(P,s.F,1);
+  const Ax=170,Ay=410,L=440,Bx=Ax+L*c,Cy=Ay-L*sn, ux=c,uy=-sn,nx=-sn,ny=-c;
+  const Qx=Ax+L*.55*ux,Qy=Ay+L*.55*uy,Gx=Qx+25*nx,Gy=Qy+25*ny;
+  let v=`<g opacity="${o.fbd?.12:1}"><rect x="0" y="${Ay}" width="800" height="14" fill="url(#hatch)"/>${line(0,Ay,800,Ay,'stroke:var(--ink)','stroke-width="2"')}`;
+  if(s.th>0) v+=`<polygon points="${Ax},${Ay} ${Bx.toFixed(1)},${Ay} ${Bx.toFixed(1)},${Cy.toFixed(1)}" style="fill:var(--solid);stroke:var(--ink)" stroke-width="2"/>`;
+  if(s.th>2){v+=`<path d="${arcPath(Ax,Ay,55,0,-s.th,0)}" fill="none" style="stroke:var(--ink)" stroke-width="1.5"/><text x="${Ax+75*Math.cos(th/2)}" y="${Ay-75*Math.sin(th/2)+6}" class="ang" text-anchor="middle">θ</text>`}
+  v+='</g>';
+  v+=`<g transform="translate(${Gx.toFixed(1)},${Gy.toFixed(1)}) rotate(${-s.th})"><rect x="-35" y="-25" width="70" height="50" rx="4" style="fill:var(--paper);stroke:var(--ink)" stroke-width="2" opacity="${o.fbd?.35:1}"/><text x="0" y="${o.fbd?-30:5}" class="small" text-anchor="middle">m</text></g>`;
+  if(o.axes){v+=line(Gx-ux*230,Gy-uy*230,Gx+ux*230,Gy+uy*230,'stroke:var(--muted)','stroke-width="1"')+line(Gx-nx*180,Gy-ny*180,Gx+nx*180,Gy+ny*180,'stroke:var(--muted)','stroke-width="1"')+`<text x="${Gx+ux*240}" y="${Gy+uy*240}" class="ang">x</text><text x="${Gx+nx*190}" y="${Gy+ny*190}" class="ang">y</text>`}
+  if(o.comp&&s.th>0){
+    const px=Gx,py=Gy+P*k;
+    v+=dashed(px,py,Gx-ux*Ppar*k,Gy-uy*Ppar*k)+dashed(px,py,Gx-nx*Pperp*k,Gy-ny*Pperp*k);
+    v+=arrow(Gx,Gy,-ux*Ppar*k,-uy*Ppar*k,C.P,'P∥',{dash:1,op:.8,w:2.5,v:Ppar});
+    v+=arrow(Gx,Gy,-nx*Pperp*k,-ny*Pperp*k,C.P,'P⊥',{dash:1,op:.8,w:2.5,v:Pperp,px:14});
+    if(s.th>4) v+=`<path d="${arcPath(Gx,Gy,40,90-s.th,90,1)}" fill="none" style="stroke:var(--ink)" stroke-width="1.3"/><text x="${Gx+54*Math.cos(rad(90-s.th/2))}" y="${Gy+54*Math.sin(rad(90-s.th/2))+5}" class="ang" text-anchor="middle">θ</text>`;
+  }
+  v+=arrow(Gx,Gy,0,P*k,C.P,'P',{v:P,px:-18});
+  v+=arrow(Gx,Gy,nx*N*k,ny*N*k,C.N,'N',{v:N});
+  v+=arrow(Gx,Gy,ux*s.F*k,uy*s.F*k,C.F,'F',{v:s.F});
+  v+=arrow(Qx,Qy,ux*f*k,uy*f*k,C.A,'Fₛ',{v:Math.abs(f),px:-nx*-18,py:-ny*-18});
+  if(!ok) v+=arrow(Gx+nx*60,Gy+ny*60,ux*R*k,uy*R*k,C.R,'R',{dash:1,v:Math.abs(R),cls:'pulse'});
+  v+=`<circle cx="${Gx}" cy="${Gy}" r="3.5" style="fill:var(--ink)"/>`;
+
+  const fv=f>1e-9?'lungo il piano, verso l’alto (si oppone alla tendenza a scivolare giù)':f<-1e-9?'lungo il piano, verso il basso (si oppone alla tendenza a salire)':'nessuno: non c’è tendenza al moto, l’attrito è nullo';
+  const cards=[
+    {sym:'P',c:C.P,name:'Forza peso',val:P,tipo:'Forza a distanza (attrazione gravitazionale della Terra)',app:'baricentro del corpo',dir:'verticale',verso:'verso il basso',mod:`P = m·g = ${fmt(s.m)} kg · ${fmt(g)} m/s² = <b>${fmt(P)} N</b>`,III:'il corpo attira la Terra con una forza uguale e opposta'},
+    {sym:'N',c:C.N,name:'Reazione vincolare normale',val:N,tipo:'Forza di contatto (esercitata dal piano)',app:'superficie di contatto (qui disegnata nel baricentro)',dir:'perpendicolare al piano',verso:'uscente dal piano',mod:`N = P⊥ = m·g·cos θ = ${fmt(P)} · cos ${fmt(s.th,0)}° = <b>${fmt(N)} N</b>`,III:'il corpo preme sul piano con una forza uguale e opposta'},
+    {sym:'Fₛ',c:C.A,name:ok?'Attrito statico':'Attrito (al valore massimo)',val:Math.abs(f),tipo:'Forza di contatto (esercitata dal piano)',app:'superficie di contatto',dir:'parallela al piano',verso:fv,mod:ok?`F<sub>s</sub> = |P∥ − F| = |${fmt(Ppar)} − ${fmt(s.F)}| = <b>${fmt(Math.abs(f))} N</b> ≤ μ<sub>s</sub>N = ${fmt(fmax)} N`:`F<sub>s,max</sub> = μ<sub>s</sub>·N = ${fmt(s.mu)} · ${fmt(N)} = <b>${fmt(fmax)} N</b>`},
+  ];
+  if(s.F>0) cards.push({sym:'F',c:C.F,name:'Forza applicata',val:s.F,tipo:'Forza esterna (ad es. una spinta o una fune)',app:'baricentro del corpo',dir:'parallela al piano',verso:'lungo il piano, verso l’alto',mod:`F = <b>${fmt(s.F)} N</b> (dato)`});
+  const comps=s.th>0?[
+    {sym:'P∥',c:C.P,name:'Componente parallela del peso',val:Ppar,mod:`P∥ = m·g·sin θ = ${fmt(P)} · sin ${fmt(s.th,0)}° = <b>${fmt(Ppar)} N</b>`,verso:'lungo il piano, verso il basso: è la parte del peso che tende a far scivolare il corpo'},
+    {sym:'P⊥',c:C.P,name:'Componente perpendicolare del peso',val:Pperp,mod:`P⊥ = m·g·cos θ = ${fmt(P)} · cos ${fmt(s.th,0)}° = <b>${fmt(Pperp)} N</b>`,verso:'perpendicolare al piano, verso il piano: è la parte del peso che preme sul piano'}]:[];
+  const need=N>0?Math.abs(freq)/N:Infinity;
+  let eq=`<h4>Asse x — parallelo al piano (positivo verso l’alto)</h4>
+  <p>ΣF<sub>x</sub> = F + F<sub>s,x</sub> − P∥ = ${fmt(s.F)} + (${fmt(f)}) − ${fmt(Ppar)} = <b>${fmt(R)} N</b> ${ok?'✓':'✗'}</p>
+  <h4>Asse y — perpendicolare al piano</h4>
+  <p>ΣF<sub>y</sub> = N − P⊥ = ${fmt(N)} − ${fmt(Pperp)} = <b>0 N</b> ✓</p>
+  <h4>Verifica dell’attrito</h4>
+  <p>attrito necessario |P∥ − F| = ${fmt(Math.abs(freq))} N ${ok?'≤':'>'} attrito massimo μ<sub>s</sub>N = ${fmt(fmax)} N</p>`;
+  if(s.F===0) eq+=`<p class="note">Senza forza applicata il corpo resta fermo finché tan θ ≤ μ<sub>s</sub>: angolo limite θ<sub>lim</sub> = arctan(${fmt(s.mu)}) = <b>${fmt(deg(Math.atan(s.mu)),1)}°</b>.</p>`;
+  const status=ok?{ok:1,t:'Il corpo è in equilibrio',d:`L’attrito statico necessario (${fmt(Math.abs(f))} N) non supera quello massimo (${fmt(fmax)} N).`}
+    :{ok:0,t:`Non è in equilibrio: il corpo scivola verso ${R<0?'il basso':'l’alto'}`,d:`Risultante R = ${fmt(Math.abs(R))} N lungo il piano. Per l’equilibrio servirebbe μₛ ≥ ${fmt(need)}.`};
+  const steps=['Isola il corpo e disegna tutte le forze che agiscono su di esso: peso, reazione normale, attrito, eventuali forze applicate.','Scegli assi inclinati: x parallelo al piano, y perpendicolare. Così N, Fₛ e F hanno una sola componente.','Scomponi il peso: P∥ = mg sin θ e P⊥ = mg cos θ (l’angolo tra P e P⊥ è uguale a θ).','Imponi ΣFᵧ = 0 per trovare N, poi ΣFₓ = 0 per trovare l’attrito necessario.','Controlla che l’attrito necessario sia ≤ μₛN: solo allora l’equilibrio è possibile.'];
+  return {svg:v,cards,comps,eq,status,steps};
+}
+
+/* ---------- 1b. PIANO ORIZZONTALE: TIRARE O SPINGERE ---------- */
+function fminPiano(m,mu,a,modo){const P=m*g,c=Math.cos(rad(a)),sn=Math.sin(rad(a)),d=modo==='tira'?c+mu*sn:c-mu*sn;return d<=1e-9?Infinity:mu*P/d}
+function plotPiano(s){
+  const W=360,H=210,l=46,r=12,t=12,b=34,P=s.m*g,ymax=Math.max(2.5*s.mu*P,1);
+  const X=a=>l+(W-l-r)*a/80,Y=f=>H-b-(H-b-t)*Math.min(f,ymax)/ymax;
+  const path=modo=>{let d='',on=false;for(let a=0;a<=80;a+=.5){const f=fminPiano(s.m,s.mu,a,modo);if(f>ymax){if(on){d+=` L${X(a).toFixed(1)},${t}`;}on=false;continue}d+=`${on?' L':' M'}${X(a).toFixed(1)},${Y(f).toFixed(1)}`;on=true}return d};
+  let v=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;background:var(--bg);border-radius:8px" role="img" aria-label="Forza minima in funzione dell'angolo">`;
+  for(let a=0;a<=80;a+=20)v+=`<text x="${X(a)}" y="${H-b+16}" class="small" text-anchor="middle" style="font-size:12px">${a}°</text>`+line(X(a),H-b,X(a),H-b+4);
+  for(let i=0;i<=4;i++){const f=ymax*i/4;v+=line(l,Y(f),W-r,Y(f),'stroke:var(--grid)')+`<text x="${l-6}" y="${Y(f)+4}" class="small" text-anchor="end" style="font-size:12px">${fmt(f,0)}</text>`}
+  v+=line(l,t,l,H-b,'stroke:var(--muted)')+line(l,H-b,W-r,H-b,'stroke:var(--muted)');
+  v+=`<path d="${path('spinge')}" fill="none" style="stroke:var(--cA)" stroke-width="3"/><path d="${path('tira')}" fill="none" style="stroke:var(--cF)" stroke-width="3"/>`;
+  v+=line(X(s.a),t,X(s.a),H-b,'stroke:var(--ink)','stroke-dasharray="4 4"');
+  ['tira','spinge'].forEach(m=>{const f=fminPiano(s.m,s.mu,s.a,m);if(f<=ymax)v+=`<circle cx="${X(s.a)}" cy="${Y(f)}" r="5" style="fill:var(${m==='tira'?'--cF':'--cA'})"/>`});
+  if(s.F<=ymax) v+=line(l,Y(s.F),W-r,Y(s.F),'stroke:var(--cR)','stroke-dasharray="2 4" stroke-width="1.5"')+`<text x="${W-r-4}" y="${Y(s.F)-5}" class="small" text-anchor="end" style="font-size:12px">F attuale</text>`;
+  v+=`<text x="${(l+W-r)/2}" y="${H-4}" class="small" text-anchor="middle" style="font-size:12px">angolo α</text></svg>
+  <p class="note"><b style="color:var(--cF)">━ tirare</b> &nbsp; <b style="color:var(--cA)">━ spingere</b> — forza minima per smuovere il corpo (N). Sopra la curva il corpo si muove, sotto resta fermo.</p>`;
+  return v;
+}
+function rPiano(s){
+  const o=state.opt,both=s.modo==='entrambe',P=s.m*g;
+  const L=[];
+  if(s.modo==='tira'||both) L.push({tira:true,F:s.F,a:s.a,sym:both?'F₁':'F',al:both?'α₁':'α',c:C.F});
+  if(s.modo==='spinge') L.push({tira:false,F:s.F,a:s.a,sym:'F',al:'α',c:C.F});
+  if(both) L.push({tira:false,F:s.F2,a:s.a2,sym:'F₂',al:'α₂',c:C.T2});
+  L.forEach(q=>{q.r=rad(q.a);q.Fx=q.F*Math.cos(q.r);q.Fy=q.F*Math.sin(q.r)});
+  const Fx=L.reduce((t,q)=>t+q.Fx,0),Nraw=P+L.reduce((t,q)=>t+(q.tira?-q.Fy:q.Fy),0);
+  const lift=Nraw<0,N=Math.max(0,Nraw),fmax=s.mu*N,ok=!lift&&Fx<=fmax+5e-3,f=lift?0:Math.min(Fx,fmax),R=Fx-f;
+  const k=150/Math.max(P,...L.map(q=>q.F),1),Ay=400,Gx=380,Gy=355,BW=160,BH=90,Qy=Ay;
+  let v=`<g opacity="${o.fbd?.12:1}"><rect x="0" y="${Ay}" width="800" height="14" fill="url(#hatch)"/>${line(0,Ay,800,Ay,'stroke:var(--ink)','stroke-width="2"')}`;
+  L.forEach(q=>{const ux=Math.cos(q.r),uy=q.tira?-Math.sin(q.r):Math.sin(q.r);q.ux=ux;q.uy=uy;q.Hx=q.tira?Gx+BW/2:Gx-BW/2;q.Hy=Gy;
+    if(q.tira) v+=line(q.Hx,q.Hy,q.Hx+ux*330,q.Hy+uy*330,'stroke:var(--ink)','stroke-width="2"')+`<text x="${Math.min(770,q.Hx+ux*330)}" y="${q.Hy+uy*330-10}" class="small" text-anchor="end">fune</text>`;
+    else v+=line(q.Hx-ux*330,q.Hy-uy*330,q.Hx,q.Hy,'stroke:var(--solid2)','stroke-width="9" stroke-linecap="round"')+`<text x="${Math.max(12,q.Hx-ux*330)}" y="${q.Hy-uy*330-14}" class="small">asta che spinge</text>`;});
+  v+='</g>';
+  v+=`<rect x="${Gx-BW/2}" y="${Gy-BH/2}" width="${BW}" height="${BH}" rx="4" style="fill:var(--paper);stroke:var(--ink)" stroke-width="2" opacity="${o.fbd?.35:1}"/><text x="${Gx+BW/2-10}" y="${Gy+BH/2-10}" class="small" text-anchor="end">m</text>`;
+  L.forEach(q=>{
+    const {Hx,Hy,ux,uy}=q,fdx=ux*q.F*k,fdy=uy*q.F*k,ox=q.tira?Hx:Hx-fdx,oy=q.tira?Hy:Hy-fdy,ha=q.r/2;
+    if(q.a>1&&q.F>0){
+      if(q.tira) v+=dashed(Hx,Hy,Hx+140,Hy)+`<path d="${arcPath(Hx,Hy,50,0,-q.a,0)}" fill="none" style="stroke:var(--ink)" stroke-width="1.4"/><text x="${Hx+68*Math.cos(ha)}" y="${Hy-68*Math.sin(ha)+6}" class="ang" text-anchor="middle">${q.al}</text>`;
+      else {const rr=Math.max(22,Math.min(50,Math.hypot(fdx,fdy)*.55));v+=dashed(Hx-140,Hy,Hx,Hy)+`<path d="${arcPath(Hx,Hy,rr,180,180+q.a,1)}" fill="none" style="stroke:var(--ink)" stroke-width="1.4"/><text x="${Hx-(rr+16)*Math.cos(ha)}" y="${Hy-(rr+16)*Math.sin(ha)+6}" class="ang" text-anchor="middle">${q.al}</text>`;}
+    }
+    if(o.comp&&q.F>0&&q.a>0){
+      if(q.tira) v+=dashed(ox+fdx,oy+fdy,ox+fdx,oy)+dashed(ox+fdx,oy+fdy,ox,oy+fdy)+arrow(ox,oy,fdx,0,q.c,q.sym+'ₓ',{dash:1,op:.85,w:2.4,lo:0,py:20})+arrow(ox,oy,0,fdy,q.c,q.sym+'ᵧ',{dash:1,op:.85,w:2.4,lo:0,px:-24});
+      else v+=dashed(ox,oy,Hx+6,oy)+dashed(ox,oy,ox,Hy)+arrow(Hx-fdx,Hy,fdx,0,q.c,q.sym+'ₓ',{dash:1,op:.85,w:2.4,lo:-Math.abs(fdx)-20,py:6})+arrow(Hx+6,Hy-fdy,0,fdy,q.c,q.sym+'ᵧ',{dash:1,op:.85,w:2.4,lo:-Math.abs(fdy)-14,px:16});
+    }
+    q.draw=arrow(ox,oy,fdx,fdy,q.c,q.sym,{v:q.F,lo:q.tira?22:-(Math.hypot(fdx,fdy))-26});
+  });
+  v+=arrow(Gx,Gy,0,P*k,C.P,'P',{v:P,px:-28,lo:-8});
+  if(N>0) v+=arrow(Gx,Gy,0,-N*k,C.N,'N',{v:N});
+  L.forEach(q=>v+=q.draw);
+  v+=arrow(Gx,Qy,-f*k,0,C.A,'Fₛ',{v:f,lo:0,px:-10,py:30});
+  if(!ok&&!lift) v+=arrow(Gx-BW/2,Gy-BH/2-30,R*k,0,C.R,'R',{dash:1,v:R,cls:'pulse',lo:26});
+  v+=`<circle cx="${Gx}" cy="${Gy}" r="3.5" style="fill:var(--ink)"/>`;
+
+  const nTerms=L.map(q=>`${q.tira?'−':'+'} ${q.sym}·sin ${q.al}`).join(' '),nNums=L.map(q=>`${q.tira?'−':'+'} ${fmt(q.Fy)}`).join(' ');
+  const cards=[
+    {sym:'P',c:C.P,name:'Forza peso',val:P,tipo:'Forza a distanza (gravitazionale)',app:'baricentro del corpo',dir:'verticale',verso:'verso il basso',mod:`P = m·g = ${fmt(s.m)} · ${fmt(g)} = <b>${fmt(P)} N</b>`,III:'il corpo attira la Terra con una forza uguale e opposta'},
+    {sym:'N',c:C.N,name:'Reazione vincolare normale',val:N,tipo:'Forza di contatto (esercitata dal pavimento)',app:'superficie di contatto',dir:'verticale (perpendicolare al piano)',verso:'verso l’alto',
+      mod:lift?'<b>0 N</b>: il corpo si stacca dal pavimento':`N = P ${nTerms} = ${fmt(P)} ${nNums} = <b>${fmt(N)} N</b>`,
+      III:'il corpo preme sul pavimento con una forza uguale e opposta: '+(Nraw<P-1e-9?'qui preme <b>meno</b> del suo peso':Nraw>P+1e-9?'qui preme <b>più</b> del suo peso':'qui preme quanto il suo peso')}];
+  L.forEach(q=>cards.push({sym:q.sym,c:q.c,name:q.tira?'Forza che tira (fune)':'Forza che spinge (asta o mani)',val:q.F,tipo:'Forza esterna applicata',app:q.tira?'faccia anteriore, punto di attacco della fune':'faccia posteriore del corpo',dir:`inclinata di ${q.al} = ${fmt(q.a,0)}° ${q.tira?'sopra':'sotto'} l’orizzontale`,verso:q.tira?'in avanti e verso l’alto':'in avanti e verso il basso',mod:`${q.sym} = <b>${fmt(q.F)} N</b> (dato)`}));
+  cards.push({sym:'Fₛ',c:C.A,name:ok?'Attrito statico':lift?'Attrito (nullo)':'Attrito (al valore massimo)',val:f,tipo:'Forza di contatto (esercitata dal pavimento)',app:'superficie di contatto',dir:'orizzontale',verso:f>1e-9?'all’indietro, opposto alla tendenza al moto':'nessuno',
+    mod:ok?`F<sub>s</sub> = ${L.map(q=>q.sym+'·cos '+q.al).join(' + ')} = <b>${fmt(f)} N</b> ≤ μ<sub>s</sub>N = ${fmt(fmax)} N`:`F<sub>s,max</sub> = μ<sub>s</sub>·N = ${fmt(s.mu)} · ${fmt(N)} = <b>${fmt(fmax)} N</b>`});
+  const comps=[];
+  L.forEach(q=>{if(q.a>0)comps.push(
+    {sym:q.sym+'ₓ',c:q.c,name:`Componente orizzontale di ${q.sym}`,val:q.Fx,mod:`${q.sym}·cos ${q.al} = ${fmt(q.F)} · cos ${fmt(q.a,0)}° = <b>${fmt(q.Fx)} N</b>`,verso:'in avanti: è la parte utile, quella che fa muovere il corpo'},
+    {sym:q.sym+'ᵧ',c:q.c,name:`Componente verticale di ${q.sym}`,val:q.Fy,mod:`${q.sym}·sin ${q.al} = ${fmt(q.F)} · sin ${fmt(q.a,0)}° = <b>${fmt(q.Fy)} N</b>`,verso:q.tira?'verso l’alto: “alleggerisce” il corpo e riduce N':'verso il basso: schiaccia il corpo e aumenta N'})});
+
+  let eq=`<h4>Asse x (orizzontale, positivo in avanti)</h4><p>${L.map(q=>q.sym+'·cos '+q.al).join(' + ')} − F<sub>s</sub> = ${L.map(q=>fmt(q.Fx)).join(' + ')} − ${fmt(f)} = <b>${fmt(R)} N</b> ${ok?'✓':'✗'}</p>
+  <h4>Asse y (verticale, positivo in alto)</h4><p>N ${L.map(q=>`${q.tira?'+':'−'} ${q.sym}·sin ${q.al}`).join(' ')} − P = 0 → N = <b>${fmt(Nraw)} N</b> ${lift?'✗ (negativa: il corpo si solleva)':'✓'}</p>
+  <h4>Verifica dell’attrito</h4><p>forza orizzontale ${fmt(Fx)} N ${Fx<=fmax+5e-3?'≤':'>'} μ<sub>s</sub>N = ${fmt(fmax)} N</p>`;
+  let hint='';
+  if(both){
+    const t=L[0],p=L[1],den=Math.cos(t.r)+s.mu*Math.sin(t.r),f1min=Math.max(0,(s.mu*(P+p.Fy)-p.Fx)/den);
+    const N0=P-t.Fy,Fx0=t.Fx+p.F,fmax0=s.mu*Math.max(0,N0);
+    hint=`Con questa spinta basta F₁ ≥ ${fmt(f1min)} N.`;
+    eq+=`<h3>Che cosa fa ciascuna forza</h3>
+    <p>In orizzontale <b>collaborano</b>: F₁ₓ + F₂ₓ = ${fmt(t.Fx)} + ${fmt(p.Fx)} = ${fmt(Fx)} N in avanti.<br>In verticale <b>si contrastano</b>: la fune solleva di ${fmt(t.Fy)} N, l’asta schiaccia di ${fmt(p.Fy)} N, quindi N ${Nraw<P?'scende':'sale'} da ${fmt(P)} a ${fmt(Nraw)} N.</p>
+    <p>F₁ minima, tenendo fissa la spinta: F₁ = [μ<sub>s</sub>(P + F₂ sin α₂) − F₂ cos α₂] / (cos α₁ + μ<sub>s</sub> sin α₁) = <b>${fmt(f1min)} N</b>${f1min===0?' (la spinta da sola basta)':''}</p>
+    <p class="note">${p.a>0?`Se l’asta spingesse in orizzontale (α₂ = 0) con la stessa F₂, tutta la spinta andrebbe in avanti (${fmt(Fx0)} N) e N scenderebbe a ${fmt(Math.max(0,N0))} N: attrito massimo ${fmt(fmax0)} N invece di ${fmt(fmax)} N. Inclinare l’asta verso il basso spreca forza due volte: meno spinta utile e più attrito.`:'L’asta spinge in orizzontale: tutta la spinta è utile e non aumenta N.'}</p>`;
+  } else {
+    const tira=s.modo==='tira',fmT=fminPiano(s.m,s.mu,s.a,'tira'),fmS=fminPiano(s.m,s.mu,s.a,'spinge'),Fy=s.F*Math.sin(rad(s.a));
+    const aOpt=deg(Math.atan(s.mu)),aCrit=s.mu>0?deg(Math.atan(1/s.mu)):90;
+    hint=`${tira?'Tirando':'Spingendo'} con questo angolo basta F ≥ ${fmt(tira?fmT:fmS)} N.`;
+    eq+=`<h3>Meglio tirare o spingere?</h3>
+    <p>Con la stessa F = ${fmt(s.F)} N e lo stesso α = ${fmt(s.a,0)}°:<br>tirando N = ${fmt(Math.max(0,P-Fy))} N, spingendo N = ${fmt(P+Fy)} N.</p>
+    <p>Forza minima per smuovere il corpo:<br>tirando F<sub>min</sub> = μ<sub>s</sub>mg / (cos α + μ<sub>s</sub> sin α) = <b>${fmt(fmT)} N</b><br>spingendo F<sub>min</sub> = μ<sub>s</sub>mg / (cos α − μ<sub>s</sub> sin α) = <b>${isFinite(fmS)?fmt(fmS)+' N':'impossibile'}</b></p>
+    ${plotPiano(s)}
+    <p class="note">${s.a<1?'Con la forza orizzontale (α = 0) tirare e spingere sono equivalenti: F<sub>min</sub> = μ<sub>s</sub>mg.':'<b>Conviene tirare</b>: la componente verticale solleva un po’ il corpo, N diminuisce e con lei l’attrito massimo. Spingendo verso il basso succede il contrario.'}
+    ${s.mu>0?` L’angolo migliore per tirare è α = arctan μ<sub>s</sub> = ${fmt(aOpt,1)}°. Spingendo, oltre α = arctan(1/μ<sub>s</sub>) = ${fmt(aCrit,1)}° il corpo non si muove con nessuna forza.`:''}</p>`;
+  }
+  const status=lift?{ok:0,t:'Non è in equilibrio: il corpo si solleva',d:`Le componenti verso l’alto superano il peso (${fmt(P)} N).`}
+    :ok?{ok:1,t:'Il corpo è in equilibrio (resta fermo)',d:`L’attrito necessario (${fmt(Fx)} N) non supera quello massimo (${fmt(fmax)} N).`}
+    :{ok:0,t:'Non è in equilibrio: il corpo si muove in avanti',d:`Risultante R = ${fmt(R)} N. ${hint}`};
+  const steps=['Disegna le forze sul corpo: peso, reazione normale, '+(both?'la forza della fune, quella dell’asta':'forza applicata')+' e attrito.',
+    'Scomponi ogni forza applicata in componente orizzontale (F cos α) e verticale (F sin α).',
+    'Equilibrio verticale: trova N. Le componenti verso l’alto (fune) riducono N, quelle verso il basso (asta) lo aumentano. N non è sempre uguale al peso!',
+    'Equilibrio orizzontale: l’attrito necessario è la somma delle componenti orizzontali.',
+    'Confronta con l’attrito massimo μₛN: se la forza orizzontale non lo supera, il corpo resta fermo.'];
+  return {svg:v,cards,comps,eq,status,steps};
+}
+
+/* ---------- 2. CORPO APPESO A DUE FUNI ---------- */
+function rFuni(s){
+  const o=state.opt,a1=rad(s.a1),a2=rad(s.a2),P=s.m*g,D=Math.sin(a1+a2);
+  const T1=P*Math.cos(a2)/D,T2=P*Math.cos(a1)/D;
+  const Kx=400,Ky=240,Lr=230,k=170/Math.max(T1,T2,P);
+  const A1x=Kx-Lr*Math.cos(a1),A1y=Ky-Lr*Math.sin(a1),A2x=Kx+Lr*Math.cos(a2),A2y=Ky-Lr*Math.sin(a2);
+  let v=`<g opacity="${o.fbd?.12:1}">${ceiling(A1x,A1y,70)}${ceiling(A2x,A2y,70)}`;
+  v+=line(A1x,A1y,Kx,Ky,'stroke:var(--ink)','stroke-width="2"')+line(A2x,A2y,Kx,Ky,'stroke:var(--ink)','stroke-width="2"')+line(Kx,Ky,Kx,440,'stroke:var(--ink)','stroke-width="2"');
+  v+=`<rect x="${Kx-38}" y="440" width="76" height="66" rx="4" style="fill:var(--solid);stroke:var(--ink)" stroke-width="2"/><text x="${Kx}" y="479" class="small" text-anchor="middle">m</text>`;
+  v+=`<text x="${A1x}" y="${A1y-22}" class="small" text-anchor="middle">fune 1</text><text x="${A2x}" y="${A2y-22}" class="small" text-anchor="middle">fune 2</text></g>`;
+  v+=dashed(Kx-150,Ky,Kx+150,Ky);
+  v+=`<path d="${arcPath(Kx,Ky,46,180,180+s.a1,1)}" fill="none" style="stroke:var(--ink)" stroke-width="1.4"/><path d="${arcPath(Kx,Ky,58,360-s.a2,360,1)}" fill="none" style="stroke:var(--ink)" stroke-width="1.4"/>`;
+  v+=`<text x="${Kx-66*Math.cos(a1/2)}" y="${Ky-66*Math.sin(a1/2)+6}" class="ang" text-anchor="middle">α₁</text><text x="${Kx+78*Math.cos(a2/2)}" y="${Ky-78*Math.sin(a2/2)+6}" class="ang" text-anchor="middle">α₂</text>`;
+  const t1x=-T1*Math.cos(a1)*k,t1y=-T1*Math.sin(a1)*k,t2x=T2*Math.cos(a2)*k,t2y=-T2*Math.sin(a2)*k;
+  if(o.comp){
+    v+=dashed(Kx+t1x,Ky+t1y,Kx+t1x,Ky)+dashed(Kx+t1x,Ky+t1y,Kx-6,Ky+t1y)+dashed(Kx+t2x,Ky+t2y,Kx+t2x,Ky)+dashed(Kx+t2x,Ky+t2y,Kx+6,Ky+t2y);
+    v+=arrow(Kx,Ky,t1x,0,C.T1,'T₁ₓ',{dash:1,op:.8,w:2.4,lo:26,py:16})+arrow(Kx,Ky,t2x,0,C.T2,'T₂ₓ',{dash:1,op:.8,w:2.4,lo:26,py:16});
+    v+=arrow(Kx-6,Ky,0,t1y,C.T1,'T₁ᵧ',{dash:1,op:.8,w:2.4,px:-22,lo:10})+arrow(Kx+6,Ky,0,t2y,C.T2,'T₂ᵧ',{dash:1,op:.8,w:2.4,px:22,lo:10});
+  }
+  v+=arrow(Kx,Ky,t1x,t1y,C.T1,'T₁',{v:T1,w:3.6})+arrow(Kx,Ky,t2x,t2y,C.T2,'T₂',{v:T2,w:3.6});
+  v+=arrow(Kx,Ky,0,P*k,C.T3,'T₃',{v:P,px:34,lo:-10,w:3.6});
+  v+=`<circle cx="${Kx}" cy="${Ky}" r="5" style="fill:var(--ink)"/><text x="${Kx+10}" y="${Ky+22}" class="small">nodo</text>`;
+  const cards=[
+    {sym:'T₁',c:C.T1,name:'Tensione della fune 1',val:T1,tipo:'Forza di contatto (esercitata dalla fune)',app:'nodo',dir:`lungo la fune 1, inclinata di α₁ = ${fmt(s.a1,0)}° sull’orizzontale`,verso:'dal nodo verso il punto di ancoraggio (una fune può solo tirare)',mod:`T₁ = P·cos α₂ / sin(α₁+α₂) = ${fmt(P)} · ${fmt(Math.cos(a2),3)} / ${fmt(D,3)} = <b>${fmt(T1)} N</b>`},
+    {sym:'T₂',c:C.T2,name:'Tensione della fune 2',val:T2,tipo:'Forza di contatto (esercitata dalla fune)',app:'nodo',dir:`lungo la fune 2, inclinata di α₂ = ${fmt(s.a2,0)}° sull’orizzontale`,verso:'dal nodo verso il punto di ancoraggio',mod:`T₂ = P·cos α₁ / sin(α₁+α₂) = ${fmt(P)} · ${fmt(Math.cos(a1),3)} / ${fmt(D,3)} = <b>${fmt(T2)} N</b>`},
+    {sym:'T₃',c:C.T3,name:'Tensione della fune verticale',val:P,tipo:'Forza di contatto (esercitata dalla fune che regge il corpo)',app:'nodo',dir:'verticale',verso:'verso il basso',mod:`T₃ = P = m·g = ${fmt(s.m)} · ${fmt(g)} = <b>${fmt(P)} N</b>`,III:'sul corpo appeso la stessa fune tira verso l’alto con T₃: è in equilibrio perché T₃ − P = 0'},
+    {sym:'P',c:C.P,name:'Peso del corpo appeso',val:P,tipo:'Forza a distanza (gravitazionale)',app:'baricentro del corpo (non sul nodo!)',dir:'verticale',verso:'verso il basso',mod:`P = m·g = <b>${fmt(P)} N</b>`,III:'agisce sul corpo, non sul nodo: arriva al nodo attraverso la fune verticale'}
+  ];
+  const comps=[
+    {sym:'T₁ₓ',c:C.T1,name:'Componente orizzontale di T₁',val:T1*Math.cos(a1),mod:`T₁·cos α₁ = <b>${fmt(T1*Math.cos(a1))} N</b>`,verso:'verso sinistra'},
+    {sym:'T₁ᵧ',c:C.T1,name:'Componente verticale di T₁',val:T1*Math.sin(a1),mod:`T₁·sin α₁ = <b>${fmt(T1*Math.sin(a1))} N</b>`,verso:'verso l’alto'},
+    {sym:'T₂ₓ',c:C.T2,name:'Componente orizzontale di T₂',val:T2*Math.cos(a2),mod:`T₂·cos α₂ = <b>${fmt(T2*Math.cos(a2))} N</b>`,verso:'verso destra'},
+    {sym:'T₂ᵧ',c:C.T2,name:'Componente verticale di T₂',val:T2*Math.sin(a2),mod:`T₂·sin α₂ = <b>${fmt(T2*Math.sin(a2))} N</b>`,verso:'verso l’alto'}];
+  const sx=T2*Math.cos(a2)-T1*Math.cos(a1),sy=T1*Math.sin(a1)+T2*Math.sin(a2)-P;
+  const eq=`<p class="note">Si studia l’equilibrio del <b>nodo</b>, il punto dove si incontrano le tre funi.</p>
+  <h4>Asse x (orizzontale, positivo a destra)</h4><p>T₂ cos α₂ − T₁ cos α₁ = ${fmt(T2*Math.cos(a2))} − ${fmt(T1*Math.cos(a1))} = <b>${fmt(sx)} N</b> ✓</p>
+  <h4>Asse y (verticale, positivo in alto)</h4><p>T₁ sin α₁ + T₂ sin α₂ − P = ${fmt(T1*Math.sin(a1))} + ${fmt(T2*Math.sin(a2))} − ${fmt(P)} = <b>${fmt(sy)} N</b> ✓</p>
+  <h4>Soluzione del sistema</h4><p>dalla prima: T₂ = T₁·cos α₁ / cos α₂ → sostituendo nella seconda: T₁ = P·cos α₂ / sin(α₁+α₂)</p>
+  <p class="note">${Math.abs(s.a1-s.a2)<.5?'Funi simmetriche: le due tensioni sono uguali.':`La fune più inclinata verso la verticale (${s.a1>s.a2?'fune 1':'fune 2'}) regge di più.`} Più le funi si avvicinano all’orizzontale, più le tensioni crescono: ${T1+T2>P?'qui la somma T₁+T₂ supera persino il peso.':'qui la somma T₁+T₂ è ancora inferiore al peso.'}</p>`;
+  return {svg:v,cards,comps,eq,status:{ok:1,t:'Il nodo è in equilibrio',d:`Le tensioni T₁ = ${fmt(T1)} N e T₂ = ${fmt(T2)} N annullano la risultante.`},
+    steps:['Individua il punto da studiare: il nodo, su cui agiscono tre forze (T₁, T₂, T₃).','Sul corpo appeso: T₃ − P = 0, quindi la fune verticale tira il nodo verso il basso con T₃ = mg.','Scegli assi orizzontale e verticale e scomponi T₁ e T₂ con seno e coseno degli angoli sull’orizzontale.','Scrivi ΣFₓ = 0 e ΣFᵧ = 0: è un sistema di due equazioni nelle incognite T₁ e T₂.','Risolvi per sostituzione e controlla che le tensioni siano positive.']};
+}
+
+/* ---------- 3. LEVA ---------- */
+const LB=4;
+function levaSum(s){return s.m1*g*(s.xf-s.x1)+s.m2*g*(s.xf-s.x2)+s.ma*g*(s.xf-LB/2)}
+function rLeva(s){
+  const o=state.opt,X=x=>100+150*x,yb=280;
+  const P1=s.m1*g,P2=s.m2*g,Pa=s.ma*g,R=P1+P2+Pa,k=150/Math.max(R,1);
+  const M1=P1*(s.xf-s.x1),M2=P2*(s.xf-s.x2),Ma=Pa*(s.xf-LB/2),M=M1+M2+Ma,ok=Math.abs(M)<0.01;
+  let v=`<g opacity="${o.fbd?.15:1}"><rect x="${X(s.xf)-55}" y="340" width="110" height="14" fill="url(#hatch)"/>${line(X(s.xf)-55,340,X(s.xf)+55,340,'stroke:var(--ink)','stroke-width="2"')}
+  <polygon points="${X(s.xf)},286 ${X(s.xf)-26},340 ${X(s.xf)+26},340" style="fill:var(--solid);stroke:var(--ink)" stroke-width="2"/></g>`;
+  v+=`<rect x="100" y="${yb-6}" width="600" height="12" rx="3" style="fill:var(--solid2);stroke:var(--ink)" stroke-width="1.5"/>`;
+  for(let i=0;i<=8;i++){const x=X(i/2);v+=line(x,yb-6,x,yb-1,'stroke:var(--ink)','stroke-width="1"')+(i%2||Math.abs(i/2-s.xf)<.3?'':`<text x="${x}" y="${yb+24}" class="small" text-anchor="middle">${i/2} m</text>`)}
+  [[s.x1,'m₁',s.m1],[s.x2,'m₂',s.m2]].forEach(([x,l,m])=>{if(m>0)v+=`<g opacity="${o.fbd?.3:1}"><rect x="${X(x)-22}" y="${yb-48}" width="44" height="42" rx="3" style="fill:var(--paper);stroke:var(--ink)" stroke-width="2"/><text x="${X(x)}" y="${yb-22}" class="small" text-anchor="middle">${l}</text></g>`});
+  v+=arrow(X(s.x1),yb+6,0,P1*k,C.P,'P₁',{v:P1});
+  v+=arrow(X(s.x2),yb+6,0,P2*k,C.T2,'P₂',{v:P2});
+  if(s.ma>0) v+=arrow(X(2),yb+6,0,Pa*k,C.A,'Pₐ',{v:Pa});
+  v+=arrow(X(s.xf),yb-6,0,-R*k,C.N,'R',{v:R,px:28,lo:2});
+  v+=`<circle cx="${X(s.xf)}" cy="${yb}" r="4" style="fill:var(--ink)"/>`;
+  v+=dimH(X(s.xf),X(s.x1),470,`b₁ = ${fmt(Math.abs(s.xf-s.x1))} m`)+dimH(X(s.xf),X(s.x2),496,`b₂ = ${fmt(Math.abs(s.xf-s.x2))} m`);
+  if(s.ma>0) v+=dimH(X(s.xf),X(2),522,`bₐ = ${fmt(Math.abs(s.xf-2))} m`);
+  if(!ok){const anti=M>0;v+=`<path d="${anti?arcPath(X(s.xf),yb,95,-55,-125,0):arcPath(X(s.xf),yb,95,-125,-55,1)}" fill="none" style="stroke:var(--bad)" stroke-width="3" marker-end="url(#mk)"/><text x="${X(s.xf)+(s.xf<2?170:-170)}" y="${yb-118}" class="small" text-anchor="middle" style="fill:var(--bad);font-weight:700">tende a ruotare in senso ${anti?'antiorario':'orario'}</text>`}
+  const side=x=>Math.abs(x-s.xf)<1e-9?'sul fulcro':x<s.xf?'a sinistra del fulcro':'a destra del fulcro';
+  const cards=[
+    {sym:'P₁',c:C.P,name:'Forza del corpo 1 sull’asta',val:P1,tipo:'Forza di contatto (il corpo preme sull’asta con il suo peso)',app:`asta, a x = ${fmt(s.x1)} m (${side(s.x1)})`,dir:'verticale',verso:'verso il basso',mod:`P₁ = m₁·g = ${fmt(s.m1)} · ${fmt(g)} = <b>${fmt(P1)} N</b>`},
+    {sym:'P₂',c:C.T2,name:'Forza del corpo 2 sull’asta',val:P2,tipo:'Forza di contatto (il corpo preme sull’asta con il suo peso)',app:`asta, a x = ${fmt(s.x2)} m (${side(s.x2)})`,dir:'verticale',verso:'verso il basso',mod:`P₂ = m₂·g = ${fmt(s.m2)} · ${fmt(g)} = <b>${fmt(P2)} N</b>`}];
+  if(s.ma>0) cards.push({sym:'Pₐ',c:C.A,name:'Peso dell’asta',val:Pa,tipo:'Forza a distanza (gravitazionale)',app:'baricentro dell’asta, a metà (x = 2 m)',dir:'verticale',verso:'verso il basso',mod:`Pₐ = mₐ·g = <b>${fmt(Pa)} N</b>`});
+  cards.push({sym:'R',c:C.N,name:'Reazione vincolare del fulcro',val:R,tipo:'Forza di contatto (esercitata dal fulcro)',app:`fulcro, a x = ${fmt(s.xf)} m`,dir:'verticale',verso:'verso l’alto',mod:`R = P₁ + P₂${s.ma>0?' + Pₐ':''} = <b>${fmt(R)} N</b>`,III:'l’asta preme sul fulcro con una forza uguale e opposta'});
+  const row=(sym,F,x)=>{const b=Math.abs(x-s.xf),m=F*(s.xf-x);return `<tr><td><i>${sym}</i></td><td class="n">${fmt(F)} N</td><td class="n">${fmt(b)} m</td><td class="n">${fmt(m)} N·m</td><td>${Math.abs(m)<1e-9?'—':m>0?'antiorario':'orario'}</td></tr>`};
+  const eq=`<h4>Equilibrio alla traslazione (asse verticale)</h4><p>R − P₁ − P₂${s.ma>0?' − Pₐ':''} = ${fmt(R)} − ${fmt(P1)} − ${fmt(P2)}${s.ma>0?' − '+fmt(Pa):''} = <b>0 N</b> ✓</p>
+  <h4>Equilibrio alla rotazione (polo nel fulcro, antiorario positivo)</h4>
+  <table class="mom"><thead><tr><th>Forza</th><th>Modulo</th><th>Braccio</th><th>Momento</th><th>Verso</th></tr></thead><tbody>
+  ${row('P₁',P1,s.x1)}${row('P₂',P2,s.x2)}${s.ma>0?row('Pₐ',Pa,2):''}<tr><td><i>R</i></td><td class="n">${fmt(R)} N</td><td class="n">0 m</td><td class="n">0 N·m</td><td>passa per il polo</td></tr></tbody></table>
+  <p>ΣM = ${fmt(M1)} + (${fmt(M2)})${s.ma>0?` + (${fmt(Ma)})`:''} = <b>${fmt(M)} N·m</b> ${ok?'✓':'✗'}</p>
+  <p class="note">Momento di una forza: M = F · b, dove il braccio b è la distanza del polo dalla retta d’azione della forza.</p>`;
+  return {svg:v,cards,comps:[],eq,status:ok?{ok:1,t:'L’asta è in equilibrio',d:'La somma delle forze e la somma dei momenti sono entrambe nulle.'}:{ok:0,t:`Non è in equilibrio: l’asta ruota in senso ${M>0?'antiorario':'orario'}`,d:`Momento risultante ΣM = ${fmt(M)} N·m. La somma delle forze è nulla, ma per un corpo esteso non basta.`},
+    steps:['Disegna le forze sull’asta: le forze dei corpi appoggiati, il peso dell’asta (se non trascurabile) e la reazione del fulcro.','Equilibrio alla traslazione: ΣF = 0 dà la reazione R del fulcro.','Scegli un polo: conviene il fulcro, perché il momento di R è nullo (braccio zero).','Per ogni forza calcola il braccio e il momento M = F·b, con il segno (antiorario +, orario −).','Imponi ΣM = 0 e ricava l’incognita (una massa o una distanza).']};
+}
+
+/* ---------- 4. MOLLA ---------- */
+function rMolla(s){
+  const o=state.opt,P=s.m*g,dx=P/s.k,ppm=250,L0=.4,k=Math.min(20,100/P);
+  const yA=40,yR=yA+L0*ppm,yS=yA+(L0+dx)*ppm,x=400;
+  let v=`<g opacity="${o.fbd?.15:1}">${ceiling(x,yA,140)}${spring(x,yA,yS)}</g>`;
+  v+=`<g opacity="${o.fbd?.08:.5}">${ceiling(230,yA,80)}${spring(230,yA,yR,12,16,'stroke:var(--muted)')}<text x="230" y="${yR+22}" class="small" text-anchor="middle">a riposo</text><text x="230" y="${yR+40}" class="small" text-anchor="middle">L₀ = 0,40 m</text></g>`;
+  v+=dashed(250,yR,590,yR)+dashed(440,yS,590,yS);
+  v+=line(580,yR,580,yS,'stroke:var(--ink)','stroke-width="1.5"')+line(572,yR,588,yR,'stroke:var(--ink)')+line(572,yS,588,yS,'stroke:var(--ink)')+`<text x="596" y="${(yR+yS)/2+6}" class="ang">Δx = ${fmt(dx,3)} m</text>`;
+  const yc=yS+30;
+  v+=`<rect x="${x-38}" y="${yS}" width="76" height="60" rx="4" style="fill:var(--paper);stroke:var(--ink)" stroke-width="2" opacity="${o.fbd?.35:1}"/><text x="${x-28}" y="${yS+20}" class="small">m</text>`;
+  v+=arrow(x,yc,0,P*k,C.P,'P',{v:P,px:-44,lo:-10});
+  v+=arrow(x,yS,0,-P*k,C.El,'Fₑₗ',{v:P,px:40,lo:-4});
+  v+=`<circle cx="${x}" cy="${yc}" r="3.5" style="fill:var(--ink)"/>`;
+  const cards=[
+    {sym:'P',c:C.P,name:'Forza peso',val:P,tipo:'Forza a distanza (gravitazionale)',app:'baricentro del corpo',dir:'verticale',verso:'verso il basso',mod:`P = m·g = ${fmt(s.m)} · ${fmt(g)} = <b>${fmt(P)} N</b>`},
+    {sym:'Fₑₗ',c:C.El,name:'Forza elastica (legge di Hooke)',val:P,tipo:'Forza di contatto (esercitata dalla molla)',app:'punto di aggancio molla–corpo',dir:'lungo l’asse della molla (verticale)',verso:'verso l’alto: opposto all’allungamento, la molla “richiama”',mod:`F<sub>el</sub> = k·Δx = ${fmt(s.k,0)} N/m · ${fmt(dx,3)} m = <b>${fmt(P)} N</b>`,III:'il corpo tira la molla verso il basso con una forza uguale e opposta'}];
+  const eq=`<h4>Asse verticale (positivo in alto)</h4><p>F<sub>el</sub> − P = 0 → k·Δx = m·g</p>
+  <h4>Allungamento di equilibrio</h4><p>Δx = m·g / k = ${fmt(P)} N / ${fmt(s.k,0)} N/m = <b>${fmt(dx,3)} m = ${fmt(dx*100,1)} cm</b></p>
+  <p>Lunghezza finale: L = L₀ + Δx = 0,40 + ${fmt(dx,3)} = <b>${fmt(L0+dx,3)} m</b></p>
+  <p class="note">A parità di massa, una molla più rigida (k maggiore) si allunga di meno. Raddoppiando la massa raddoppia l’allungamento: Δx è direttamente proporzionale a m.</p>`;
+  return {svg:v,cards,comps:[],eq,status:{ok:1,t:'Il corpo è in equilibrio',d:`La molla si è allungata di ${fmt(dx*100,1)} cm finché la forza elastica ha eguagliato il peso.`},
+    steps:['Disegna le forze sul corpo: il peso verso il basso e la forza elastica verso l’alto.','Scrivi la legge di Hooke: Fₑₗ = k·Δx, con Δx allungamento rispetto alla lunghezza a riposo.','Imponi l’equilibrio: k·Δx = m·g.','Ricava l’incognita: Δx = mg/k, oppure k = mg/Δx se si misura l’allungamento.']};
+}
+
+/* ---------- 5. FORZE SU UN PUNTO ---------- */
+const Ox=400,Oy=280,SPX=2;
+function resultant(fs){let rx=0,ry=0;fs.forEach(f=>{rx+=f.F*Math.cos(rad(f.a));ry+=f.F*Math.sin(rad(f.a))});return {rx,ry,R:Math.hypot(rx,ry),a:(deg(Math.atan2(ry,rx))+360)%360}}
+function rPunto(s){
+  const o=state.opt,fs=s.forces,r=resultant(fs),ok=r.R<0.05;
+  let v=line(40,Oy,760,Oy,'stroke:var(--muted)','stroke-width="1.2"')+line(Ox,30,Ox,540,'stroke:var(--muted)','stroke-width="1.2"')+`<text x="764" y="${Oy+5}" class="ang">x</text><text x="${Ox+8}" y="34" class="ang">y</text><text x="44" y="548" class="small">1 quadretto = 10 N</text>`;
+  const sub=i=>SUB[i+1]||'';
+  if(o.poly){let cx=Ox,cy=Oy;fs.forEach((f,i)=>{const dx=f.F*Math.cos(rad(f.a))*SPX,dy=-f.F*Math.sin(rad(f.a))*SPX;v+=arrow(cx,cy,dx,dy,PCOL[i%6],'',{op:.4,w:2.4,dash:1});cx+=dx;cy+=dy})}
+  fs.forEach((f,i)=>{const dx=f.F*Math.cos(rad(f.a))*SPX,dy=-f.F*Math.sin(rad(f.a))*SPX;
+    if(o.comp&&f.F>0) v+=dashed(Ox+dx,Oy+dy,Ox+dx,Oy)+dashed(Ox+dx,Oy+dy,Ox,Oy+dy);
+    v+=arrow(Ox,Oy,dx,dy,PCOL[i%6],'F'+sub(i),{v:f.F});
+    v+=`<circle cx="${Ox+dx}" cy="${Oy+dy}" r="13" data-i="${i}" style="fill:transparent;stroke:var(${PCOL[i%6]});cursor:grab" stroke-width="1.5" stroke-dasharray="3 3"/>`});
+  if(o.res&&!ok) v+=arrow(Ox,Oy,r.rx*SPX,-r.ry*SPX,C.R,'R',{dash:1,v:r.R,w:3.6});
+  if(o.equi&&!ok) v+=arrow(Ox,Oy,-r.rx*SPX,r.ry*SPX,C.E,'E',{v:r.R,w:3.6});
+  v+=`<circle cx="${Ox}" cy="${Oy}" r="5" style="fill:var(--ink)"/><text x="${Ox-10}" y="${Oy+20}" class="small" text-anchor="end">O</text>`;
+  const cards=fs.map((f,i)=>({sym:'F'+sub(i),c:PCOL[i%6],name:`Forza ${i+1}`,val:f.F,tipo:'Forza applicata al punto materiale',app:'punto O',dir:`retta inclinata di ${fmt(f.a,0)}° rispetto all’asse x`,verso:`angolo α = ${fmt(f.a,0)}° misurato in senso antiorario dall’asse x positivo`,mod:`<b>${fmt(f.F)} N</b> — F<sub>x</sub> = F cos α = ${fmt(f.F*Math.cos(rad(f.a)))} N, F<sub>y</sub> = F sin α = ${fmt(f.F*Math.sin(rad(f.a)))} N`}));
+  const comps=ok?[]:[{sym:'R',c:C.R,name:'Risultante (somma vettoriale)',val:r.R,mod:`R = √(R<sub>x</sub>² + R<sub>y</sub>²) = <b>${fmt(r.R)} N</b>, angolo ${fmt(r.a,1)}°`,verso:'non è una forza in più: è l’effetto complessivo di tutte le forze'},{sym:'E',c:C.E,name:'Equilibrante',val:r.R,mod:`E = −R: modulo <b>${fmt(r.R)} N</b>, angolo ${fmt((r.a+180)%360,1)}°`,verso:'la forza che bisognerebbe aggiungere per avere equilibrio'}];
+  const eq=`<h4>Componenti lungo x</h4><p>R<sub>x</sub> = ΣF cos α = ${fs.map(f=>fmt(f.F*Math.cos(rad(f.a)))).join(' + ').replace(/\+ -/g,'− ')} = <b>${fmt(r.rx)} N</b></p>
+  <h4>Componenti lungo y</h4><p>R<sub>y</sub> = ΣF sin α = ${fs.map(f=>fmt(f.F*Math.sin(rad(f.a)))).join(' + ').replace(/\+ -/g,'− ')} = <b>${fmt(r.ry)} N</b></p>
+  <h4>Modulo della risultante</h4><p>R = √(${fmt(r.rx)}² + ${fmt(r.ry)}²) = <b>${fmt(r.R)} N</b> ${ok?'✓':'✗'}</p>
+  <p class="note">Un punto materiale è in equilibrio se R<sub>x</sub> = 0 e R<sub>y</sub> = 0. Attiva il “poligono delle forze”: se le forze messe punta-coda si chiudono, la risultante è nulla. Puoi trascinare la punta di ogni vettore.</p>`;
+  return {svg:v,cards,comps,eq,status:ok?{ok:1,t:'Il punto è in equilibrio',d:'La risultante è nulla: il poligono delle forze si chiude.'}:{ok:0,t:'Il punto non è in equilibrio',d:`Risultante R = ${fmt(r.R)} N a ${fmt(r.a,1)}°. Aggiungi l’equilibrante per bilanciare.`},
+    steps:['Fissa un sistema di assi con l’origine nel punto di applicazione.','Per ogni forza calcola Fₓ = F cos α e Fᵧ = F sin α (α misurato dall’asse x in senso antiorario).','Somma le componenti: Rₓ = ΣFₓ, Rᵧ = ΣFᵧ.','Il punto è in equilibrio se Rₓ = 0 e Rᵧ = 0; altrimenti l’equilibrante è E = −R.']};
+}
+
+/* ---------- scenari ---------- */
+const SC={
+  piano:{t:'Piano orizzontale',r:rPiano,opts:['comp','val','fbd'],intro:'Un corpo appoggiato sul pavimento viene tirato con una fune o spinto con un’asta, con un angolo α. Resta fermo? È meglio tirare o spingere?',
+    ctr:()=>{const b=state.piano.modo==='entrambe';return [{k:'m',l:'Massa m',min:.5,max:50,st:.5,u:'kg'},{k:'mu',l:'Coefficiente di attrito statico μₛ',min:0,max:1.2,st:.01,u:''},{k:'F',l:b?'Forza che tira F₁ (fune)':'Modulo della forza F',min:0,max:500,st:1,u:'N'},{k:'a',l:b?'Angolo α₁ della fune, sopra l’orizzontale':'Angolo α con l’orizzontale',min:0,max:80,st:1,u:'°'}].concat(b?[{k:'F2',l:'Forza che spinge F₂ (asta)',min:0,max:500,st:1,u:'N'},{k:'a2',l:'Angolo α₂ dell’asta, sotto l’orizzontale',min:0,max:80,st:1,u:'°'}]:[])},
+    extra:()=>{const m=state.piano.modo,B=(k,t)=>`<button class="btn" data-act="${k}" aria-pressed="${m===k}" style="margin:0;${m===k?'background:var(--ink);color:var(--paper)':''}">${t}</button>`;return `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${B('tira','Tira')}${B('spinge','Spinge')}${B('entrambe','Tira + spinge')}</div><button class="btn" data-act="fmin">${m==='entrambe'?'Imposta F₁ minima':'Imposta F minima'}</button><div class="msg" id="msg"></div>`}},
+  incline:{t:'Piano inclinato',r:rIncline,opts:['comp','val','axes','fbd'],intro:'Un corpo è appoggiato su un piano inclinato con attrito. Resta fermo? Quanto vale la forza d’attrito?',
+    ctr:[{k:'m',l:'Massa m',min:.5,max:20,st:.5,u:'kg'},{k:'th',l:'Inclinazione θ',min:0,max:60,st:1,u:'°'},{k:'mu',l:'Coefficiente di attrito statico μₛ',min:0,max:1.2,st:.01,u:''},{k:'F',l:'Forza F parallela al piano, verso l’alto',min:0,max:200,st:1,u:'N'}]},
+  funi:{t:'Corpo appeso a due funi',r:rFuni,opts:['comp','val','fbd'],intro:'Un corpo è appeso a un nodo tenuto da due funi inclinate. Quanto vale la tensione di ciascuna fune?',
+    ctr:[{k:'m',l:'Massa m',min:.5,max:20,st:.5,u:'kg'},{k:'a1',l:'Angolo α₁ della fune 1 sull’orizzontale',min:10,max:85,st:1,u:'°'},{k:'a2',l:'Angolo α₂ della fune 2 sull’orizzontale',min:10,max:85,st:1,u:'°'}]},
+  leva:{t:'Leva e momenti',r:rLeva,opts:['val','fbd'],intro:'Un’asta lunga 4 m poggia su un fulcro e porta due corpi. Per l’equilibrio di un corpo esteso servono ΣF = 0 e ΣM = 0.',
+    ctr:[{k:'m1',l:'Massa m₁',min:0,max:20,st:.1,u:'kg'},{k:'x1',l:'Posizione di m₁ sull’asta',min:0,max:4,st:.05,u:'m'},{k:'m2',l:'Massa m₂',min:0,max:20,st:.1,u:'kg'},{k:'x2',l:'Posizione di m₂ sull’asta',min:0,max:4,st:.05,u:'m'},{k:'xf',l:'Posizione del fulcro',min:.25,max:3.75,st:.05,u:'m'},{k:'ma',l:'Massa dell’asta (0 = trascurabile)',min:0,max:10,st:.1,u:'kg'}],
+    extra:`<button class="btn" data-act="bm2">Bilancia trovando m₂</button><button class="btn" data-act="bx2">Bilancia trovando x₂</button><div class="msg" id="msg"></div>`},
+  molla:{t:'Molla',r:rMolla,opts:['val','fbd'],intro:'Un corpo è appeso a una molla di costante elastica k. Di quanto si allunga la molla quando il corpo è in equilibrio?',
+    ctr:[{k:'m',l:'Massa m',min:.05,max:2,st:.05,u:'kg'},{k:'k',l:'Costante elastica k',min:20,max:1000,st:1,u:'N/m'}]},
+  punto:{t:'Forze su un punto',r:rPunto,opts:['comp','val','res','equi','poly'],intro:'Più forze agiscono sullo stesso punto materiale. Trova la risultante e la forza equilibrante; trascina le punte dei vettori.'}
+};
+const OPTL={comp:'Mostra le componenti',val:'Mostra i valori sulle frecce',axes:'Assi inclinati x, y',fbd:'Solo diagramma di corpo libero',res:'Mostra la risultante R',equi:'Mostra l’equilibrante E',poly:'Poligono delle forze (punta-coda)'};
+
+/* ---------- interfaccia ---------- */
+const nv=v=>String(+(+v).toFixed(3)).replace('.',',');
+function ctrlHTML(c,val,attr){return `<div class="ctrl"><label for="r-${attr.replace(/\W/g,'')}">${c.l}</label><div class="row"><input id="r-${attr.replace(/\W/g,'')}" type="range" min="${c.min}" max="${c.max}" step="${c.st}" value="${val}" ${attr}><input type="number" step="any" min="${c.min}" max="${c.max}" value="${+(+val).toFixed(3)}" ${attr} aria-label="${c.l}"><span class="u">${c.u}</span></div></div>`}
+function buildTabs(){$('tabs').innerHTML=Object.entries(SC).map(([k,s])=>`<button class="tab" role="tab" data-sc="${k}" aria-selected="${k===state.sc}">${s.t}</button>`).join('')}
+function buildCtrls(){
+  const s=SC[state.sc],st=state[state.sc];
+  if(state.sc==='punto'){
+    $('ctrls').innerHTML=st.forces.map((f,i)=>`<div class="fblock"><div class="fh"><span style="color:var(${PCOL[i%6]})"><i>F</i>${SUB[i+1]||''}</span>${st.forces.length>1?`<button class="btn" style="margin:0;min-height:36px;padding:4px 10px" data-act="del" data-i="${i}">Rimuovi</button>`:''}</div>
+    ${ctrlHTML({l:'Modulo',min:0,max:200,st:1,u:'N'},f.F,`data-i="${i}" data-f="F"`)}${ctrlHTML({l:'Angolo α (dall’asse x, antiorario)',min:0,max:360,st:1,u:'°'},f.a,`data-i="${i}" data-f="a"`)}</div>`).join('')+
+    `${st.forces.length<6?'<button class="btn" data-act="add">+ Aggiungi forza</button>':''}<button class="btn" data-act="equi">Aggiungi l’equilibrante</button><button class="btn" data-act="reset">Ripristina</button>`;
+  } else $('ctrls').innerHTML=(typeof s.ctr==='function'?s.ctr():s.ctr).map(c=>ctrlHTML(c,st[c.k],`data-k="${c.k}"`)).join('')+(typeof s.extra==='function'?s.extra():(s.extra||''));
+  $('opts').innerHTML=s.opts.map(k=>`<label><input type="checkbox" data-o="${k}" ${state.opt[k]?'checked':''}>${OPTL[k]}</label>`).join('');
+  $('intro').textContent=s.intro;
+}
+function syncCtrls(){
+  document.querySelectorAll('#ctrls input').forEach(el=>{if(el===document.activeElement)return;
+    const v=el.dataset.k?state[state.sc][el.dataset.k]:state.punto.forces[el.dataset.i]?.[el.dataset.f];
+    if(v!=null) el.value=el.type==='number'?+(+v).toFixed(3):v});
+}
+function fcard(f,comp){return `<div class="force ${comp?'comp':''}" style="--c:var(${f.c})"><div class="fhd"><span class="sym">${f.sym}</span><span class="fname">${f.name}</span><span class="fval">${fmt(f.val)} N</span></div><dl>
+${f.tipo?`<dt>Tipo</dt><dd>${f.tipo}</dd>`:''}${f.app?`<dt>Applicata</dt><dd>${f.app}</dd>`:''}${f.dir?`<dt>Direzione</dt><dd>${f.dir}</dd>`:''}<dt>Verso</dt><dd>${f.verso}</dd><dt>Modulo</dt><dd>${f.mod}</dd>${f.III?`<dt>III principio</dt><dd>${f.III}</dd>`:''}</dl></div>`}
+function render(){
+  const r=SC[state.sc].r(state[state.sc]);
+  $('svg').innerHTML=DEFS+r.svg;
+  $('status').className='status '+(r.status.ok?'ok':'bad');
+  $('status').innerHTML=`${r.status.ok?'✓':'✗'} ${r.status.t}<span>${r.status.d}</span>`;
+  $('forces').innerHTML=r.cards.map(f=>fcard(f)).join('');
+  $('compsWrap').innerHTML=r.comps.length?`<h3>${state.sc==='punto'?'Risultante ed equilibrante':'Scomposizione (non sono forze in più, ma parti di una forza)'}</h3><div class="forces">${r.comps.map(f=>fcard(f,1)).join('')}</div>`:'';
+  $('eqs').innerHTML=r.eq;
+  $('steps').innerHTML=r.steps.map(s=>`<li>${s}</li>`).join('');
+  syncCtrls();
+}
+function setSc(k){state.sc=k;buildTabs();buildCtrls();render();try{localStorage.setItem('eq-sc',k)}catch(e){}}
+
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-sc]');if(b)setSc(b.dataset.sc)});
+$('ctrls').addEventListener('input',e=>{const el=e.target,v=parseFloat(String(el.value).replace(',','.'));if(isNaN(v))return;
+  if(el.dataset.k) state[state.sc][el.dataset.k]=v; else if(el.dataset.f) state.punto.forces[el.dataset.i][el.dataset.f]=v;
+  const m=$('msg');if(m)m.textContent='';render()});
+$('opts').addEventListener('change',e=>{state.opt[e.target.dataset.o]=e.target.checked;render()});
+$('gsel').addEventListener('change',e=>{g=parseFloat(e.target.value);render()});
+$('ctrls').addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,p=state.punto,s=state.leva;
+  if(a==='tira'||a==='spinge'||a==='entrambe'){state.piano.modo=a}
+  else if(a==='fmin'&&state.piano.modo==='entrambe'){const q=state.piano,P=q.m*g,r1=rad(q.a),r2=rad(q.a2);q.F=+Math.max(0,(q.mu*(P+q.F2*Math.sin(r2))-q.F2*Math.cos(r2))/(Math.cos(r1)+q.mu*Math.sin(r1))).toFixed(3)}
+  else if(a==='fmin'){const q=state.piano,fm=fminPiano(q.m,q.mu,q.a,q.modo);if(!isFinite(fm)){buildCtrls();render();$('msg').textContent='Spingendo con questo angolo il corpo non si muove con nessuna forza.';return}q.F=+fm.toFixed(3)}
+  else if(a==='add'){p.forces.push({F:30,a:(p.forces.length*70)%360})}
+  else if(a==='del'){p.forces.splice(+b.dataset.i,1)}
+  else if(a==='reset'){p.forces=[{F:90,a:30},{F:70,a:150},{F:60,a:260}]}
+  else if(a==='equi'){const r=resultant(p.forces);if(r.R>=0.05&&p.forces.length<6)p.forces.push({F:+r.R.toFixed(3),a:+((r.a+180)%360).toFixed(3)})}
+  else if(a==='bm2'||a==='bx2'){const A=s.m1*(s.xf-s.x1)+s.ma*(s.xf-LB/2),msg=$('msg');
+    if(a==='bm2'){if(Math.abs(s.xf-s.x2)<1e-9){msg.textContent='m₂ è sul fulcro: il suo momento è nullo, non può bilanciare.';return}
+      const m2=-A/(s.xf-s.x2);if(m2<0||m2>20){msg.textContent=m2<0?'Con m₂ da quel lato i momenti si sommano: sposta m₂ dall’altra parte del fulcro.':`Servirebbe m₂ = ${fmt(m2)} kg, oltre il limite di 20 kg.`;return}
+      s.m2=m2;msg.textContent=`m₂ = ${fmt(m2,3)} kg`}
+    else{if(s.m2<=0){msg.textContent='Serve m₂ > 0.';return}const x2=s.xf+A/s.m2;if(x2<0||x2>LB){msg.textContent=`Servirebbe x₂ = ${fmt(x2)} m, fuori dall’asta: aumenta m₂.`;return}
+      s.x2=x2;msg.textContent=`x₂ = ${fmt(x2,3)} m`}
+    const keep=msg.textContent;render();$('msg').textContent=keep;return}
+  buildCtrls();render()});
+
+/* trascinamento dei vettori */
+const svg=$('svg');let drag=-1;
+function svgPt(e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse())}
+svg.addEventListener('pointerdown',e=>{const i=e.target.dataset?.i;if(i==null||state.sc!=='punto')return;drag=+i;svg.setPointerCapture(e.pointerId);e.preventDefault()});
+svg.addEventListener('pointermove',e=>{if(drag<0)return;const p=svgPt(e),dx=p.x-Ox,dy=Oy-p.y,f=state.punto.forces[drag];
+  f.F=Math.min(200,Math.round(Math.hypot(dx,dy)/SPX));f.a=Math.round((deg(Math.atan2(dy,dx))+360)%360)%360;render()});
+['pointerup','pointercancel'].forEach(t=>svg.addEventListener(t,()=>{drag=-1}));
+
+let start='piano';try{const k=localStorage.getItem('eq-sc');if(k&&SC[k])start=k}catch(e){}
+setSc(start);
+}
+</script>
+</body>
+</html>
